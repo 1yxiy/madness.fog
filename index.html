@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iPhone Simulation</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+  background:#1a1a1a;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Helvetica Neue',sans-serif;
+}
+
+/* ─── IPHONE SHELL ─── */
+.iphone {
+  width:390px;
+  height:844px;
+  background:#000;
+  border-radius:55px;
+  position:relative;
+  overflow:hidden;
+  border:14px solid #1a1a1a;
+  box-shadow:0 0 0 1px #333, 0 30px 80px rgba(0,0,0,0.8), inset 0 0 0 1px #444;
+  flex-shrink:0;
+}
+
+.iphone::before { /* power button */
+  content:'';position:absolute;right:-14px;top:180px;width:4px;height:80px;background:#2a2a2a;border-radius:0 2px 2px 0;
+}
+.iphone::after { /* vol up */
+  content:'';position:absolute;left:-14px;top:120px;width:4px;height:45px;background:#2a2a2a;border-radius:2px 0 0 2px;
+}
+.vol-down { position:absolute;left:-14px;top:180px;width:4px;height:45px;background:#2a2a2a;border-radius:2px 0 0 2px; }
+.mute { position:absolute;left:-14px;top:90px;width:3px;height:25px;background:#2a2a2a;border-radius:2px 0 0 2px; }
+
+.dynamic-island {
+  position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  width:126px;height:37px;background:#000;border-radius:19px;z-index:9999;
+}
+
+/* ─── STATUS BAR ─── */
+.status-bar {
+  position:absolute;top:0;left:0;right:0;height:54px;
+  padding:10px 28px 0;display:flex;justify-content:space-between;align-items:center;
+  color:#fff;font-size:15px;font-weight:600;z-index:999;
+}
+/* LEFT: time */
+.status-left-time { display:flex;align-items:center; }
+/* RIGHT: signal + 5G + battery */
+.status-right { display:flex;align-items:center;gap:5px; }
+.sig { display:flex;align-items:flex-end;gap:2px;height:12px; }
+.sig span { width:3px;background:#fff;border-radius:1px; }
+.sig span:nth-child(1){height:4px} .sig span:nth-child(2){height:7px} .sig span:nth-child(3){height:10px} .sig span:nth-child(4){height:12px}
+.bat-icon { width:27px;height:13px;border:1.5px solid #fff;border-radius:3px;padding:1.5px;position:relative; }
+.bat-icon::after { content:'';position:absolute;right:-4px;top:50%;transform:translateY(-50%);width:2px;height:5px;background:#fff;border-radius:0 1px 1px 0; }
+.bat-fill { width:85%;height:100%;background:#fff;border-radius:1px; }
+
+@keyframes notif-tap {
+  0%  { transform:scale(1); }
+  20% { transform:scale(0.96); }
+  50% { transform:scale(1.03); }
+  75% { transform:scale(0.99); }
+  100%{ transform:scale(1); }
+}
+.notif-card.tapping { animation:notif-tap 0.4s cubic-bezier(0.36,0.07,0.19,0.97); }
+.screen {
+  position:absolute;inset:0;transition:transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
+  will-change:transform;
+}
+.screen.hidden { transform:translateY(100%);pointer-events:none; }
+.screen.slide-up { transform:translateY(-100%);pointer-events:none; }
+
+/* ─── LOCK SCREEN ─── */
+#lock-screen {
+  background:#3b3b3b;
+  display:flex;flex-direction:column;align-items:center;
+}
+
+.lock-bg { display:none; }
+
+/* Fog particles - removed */
+.fog-particles { display:none; }
+
+.time-wrap { position:relative;z-index:2;margin-top:90px;width:100%;text-align:center; }
+.lock-time { font-size:82px;font-weight:200;color:#fff;letter-spacing:-2px;line-height:1; }
+.lock-date { font-size:17px;font-weight:500;color:rgba(255,255,255,0.7);margin-top:6px; }
+
+.notif-area { position:relative;z-index:2;width:100%;padding:20px 18px;margin-top:20px; }
+
+.notif-card {
+  background:rgba(255,255,255,0.12);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:20px;padding:14px 16px;
+}
+
+.notif-head { display:flex;align-items:center;gap:10px;margin-bottom:8px; }
+.notif-icon { width:30px;height:30px;background:linear-gradient(135deg,#ff3b30,#ff8c00);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0; }
+.notif-app { font-size:12px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px; }
+.notif-when { font-size:12px;color:rgba(255,255,255,0.4);margin-top:1px; }
+.notif-title { font-size:15px;font-weight:700;color:#fff;margin-bottom:5px; }
+.notif-body { font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.8); }
+
+.swipe-hint {
+  position:absolute;bottom:40px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  color:rgba(255,255,255,0.5);font-size:13px;font-weight:500;
+  cursor:pointer;z-index:10;
+}
+.swipe-arrow { font-size:22px; }
+
+.home-indicator-lock {
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  width:134px;height:5px;background:rgba(255,255,255,0.35);border-radius:3px;z-index:10;
+}
+
+/* ─── PASSCODE SCREEN ─── */
+#passcode-screen {
+  background:#3b3b3b;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transform:translateY(100%);
+}
+
+.passcode-title { color:#fff;font-size:20px;font-weight:600;margin-bottom:24px; }
+.dots { display:flex;gap:18px;margin-bottom:36px; }
+.dot {
+  width:14px;height:14px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.6);
+  background:transparent;transition:all 0.15s ease;
+}
+.dot.filled { background:#fff;border-color:#fff;transform:scale(1.1); }
+.dot.error { border-color:#ff3b30;background:#ff3b30; }
+.dot.shake { animation:dot-shake 0.4s ease; }
+
+@keyframes dot-shake {
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
+}
+
+.keypad { display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:280px; }
+.key {
+  height:72px;border-radius:50%;background:rgba(255,255,255,0.18);border:none;
+  color:#fff;font-size:26px;font-weight:300;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:background 0.1s;position:relative;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.key:active,.key.pressed { background:rgba(255,255,255,0.35); }
+.key-sub { font-size:9px;font-weight:600;letter-spacing:1.5px;color:rgba(255,255,255,0.5);margin-top:2px; }
+.key-del { font-size:20px; }
+.key-empty { background:transparent;cursor:default; }
+.key-empty:active { background:transparent; }
+
+.emergency-text { margin-top:20px;font-size:15px;color:rgba(255,255,255,0.5);cursor:pointer; }
+
+/* ─── HOME SCREEN ─── */
+#home-screen {
+  background:#3b3b3b;
+  transform:translateY(100%);
+}
+
+.home-bg { display:none; }
+
+.home-content { position:relative;z-index:2;padding:60px 24px 0;height:100%; }
+
+.home-status { font-size:13px;color:rgba(255,255,255,0.4);margin-top:4px;text-align:center; }
+
+.app-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:20px 14px;margin-top:60px; }
+
+.app-icon-wrap {
+  display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform 0.15s;
+}
+.app-icon-wrap:active { transform:scale(0.9); }
+
+.app-icon {
+  width:72px;height:72px;border-radius:18px;display:flex;align-items:center;justify-content:center;
+  font-size:34px;position:relative;
+  box-shadow:0 4px 15px rgba(0,0,0,0.4);
+}
+
+.app-icon::before {
+  content:'';position:absolute;inset:0;border-radius:18px;
+  background:linear-gradient(135deg,rgba(255,255,255,0.15) 0%,transparent 50%);
+  pointer-events:none;
+}
+
+.app-messages { background:linear-gradient(135deg,#1fad6a,#34c759); }
+.app-stats { background:linear-gradient(135deg,#1c3a6b,#2d6ae0); }
+.app-dday { background:linear-gradient(135deg,#7b1a1a,#c0392b); }
+.app-radio { background:linear-gradient(135deg,#4a2080,#8e44ad); }
+
+.app-label { font-size:12px;color:rgba(255,255,255,0.8);font-weight:500;text-align:center; }
+
+.notif-badge {
+  position:absolute;top:-6px;right:-6px;
+  background:#ff3b30;color:#fff;font-size:11px;font-weight:700;
+  border-radius:10px;min-width:18px;height:18px;padding:0 4px;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid #3b3b3b;
+  z-index:10;
+}
+
+.home-dock {
+  position:absolute;bottom:30px;left:24px;right:24px;
+  background:rgba(255,255,255,0.1);backdrop-filter:blur(20px);
+  border-radius:26px;padding:12px;
+  display:flex;justify-content:center;gap:20px;
+  border:1px solid rgba(255,255,255,0.1);
+}
+
+.home-indicator {
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  width:134px;height:5px;background:rgba(255,255,255,0.3);border-radius:3px;
+}
+
+/* ─── APP SCREENS ─── */
+.app-screen {
+  position:absolute;inset:0;transform:translateX(100%);
+  transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  z-index:100;
+  pointer-events:none;
+}
+.app-screen.open { transform:translateX(0);pointer-events:all; }
+
+/* ── 무선 통신 App ── */
+#app-radio { background:#0a0014;display:flex;flex-direction:column; }
+
+#app-messages {
+  background:#000;display:flex;flex-direction:column;
+}
+
+.app-nav {
+  background:rgba(28,28,30,0.95);
+  backdrop-filter:blur(20px);
+  padding:56px 18px 12px;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+  display:flex;align-items:center;
+  flex-shrink:0;
+  position:relative;
+}
+.back-btn {
+  background:none;border:none;color:#2d6ae0;font-size:17px;cursor:pointer;
+  display:flex;align-items:center;gap:4px;padding:4px 0;
+  -webkit-tap-highlight-color:transparent;
+  position:absolute;left:18px;
+}
+.back-btn:active { opacity:0.6; }
+.app-nav-title { font-size:17px;font-weight:600;color:#fff;width:100%;text-align:center; }
+
+.msg-list { flex:1;overflow-y:auto;padding:10px 0; }
+.msg-list::-webkit-scrollbar { display:none; }
+
+.msg-item {
+  padding:14px 18px;display:flex;align-items:center;gap:14px;
+  border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:background 0.1s;
+}
+.msg-item:active { background:rgba(255,255,255,0.05); }
+
+.msg-avatar {
+  width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#ff3b30,#ff6b00);
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+}
+.msg-avatar.gov { background:linear-gradient(135deg,#1c3a6b,#2d6ae0); font-size:16px; }
+
+.msg-info { flex:1;min-width:0; }
+.msg-name { font-size:17px;font-weight:600;color:#fff;margin-bottom:3px; }
+.msg-preview { font-size:15px;color:rgba(255,255,255,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.msg-time { font-size:13px;color:rgba(255,255,255,0.4); }
+.unread-dot { width:10px;height:10px;border-radius:50%;background:#2d6ae0;flex-shrink:0; }
+
+/* ── Convo View ── */
+#app-convo {
+  background:#000;display:flex;flex-direction:column;
+  position:absolute;inset:0;transform:translateX(100%);
+  transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  z-index:110;pointer-events:none;
+}
+#app-convo.open { transform:translateX(0);pointer-events:all; }
+
+.convo-nav {
+  background:rgba(28,28,30,0.95);backdrop-filter:blur(20px);
+  padding:56px 18px 12px;border-bottom:1px solid rgba(255,255,255,0.1);
+  display:flex;align-items:center;flex-shrink:0;position:relative;
+}
+.convo-center { display:flex;align-items:center;gap:8px;flex:1;justify-content:center; }
+.convo-avatar { width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1c3a6b,#2d6ae0);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0; }
+.convo-info { text-align:center; }
+.convo-name { font-size:15px;font-weight:600;color:#fff; }
+.convo-status { font-size:11px;color:rgba(255,255,255,0.5); }
+
+.convo-body { flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:10px; }
+.convo-body::-webkit-scrollbar { display:none; }
+
+.bubble-wrap { display:flex;flex-direction:column;max-width:80%; }
+.bubble-wrap.mine { align-self:flex-end;align-items:flex-end; }
+.bubble-wrap.theirs { align-self:flex-start;align-items:flex-start; }
+
+.bubble {
+  padding:10px 14px;border-radius:18px;font-size:15px;line-height:1.45;
+  position:relative;
+}
+.bubble.mine { background:#2d6ae0;color:#fff;border-bottom-right-radius:5px; }
+.bubble.theirs { background:rgba(58,58,60,0.9);color:#fff;border-bottom-left-radius:5px; }
+.bubble.system {
+  background:rgba(255,60,60,0.15);border:1px solid rgba(255,60,60,0.3);
+  color:rgba(255,255,255,0.9);text-align:center;border-radius:12px;font-size:13px;
+  width:90%;margin:0 auto;
+}
+.bubble-wrap.system-wrap {
+  align-self:center;align-items:center;width:90%;max-width:90%;
+}
+
+.bubble-time { font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px;padding:0 4px; }
+
+.convo-input-wrap {
+  padding:10px 14px 24px;background:rgba(28,28,30,0.95);border-top:1px solid rgba(255,255,255,0.08);
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+.convo-input {
+  flex:1;background:rgba(58,58,60,0.8);border:none;border-radius:20px;
+  padding:10px 16px;color:#fff;font-size:15px;outline:none;
+}
+.convo-input::placeholder { color:rgba(255,255,255,0.3); }
+.send-btn {
+  width:36px;height:36px;border-radius:50%;background:#2d6ae0;border:none;color:#fff;font-size:18px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
+}
+.send-btn:active { background:#1a55cc; }
+
+/* ── Stats App ── */
+#app-stats {
+  background:#0a0d14;display:flex;flex-direction:column;
+}
+
+.stats-header {
+  padding:56px 20px 16px;background:rgba(10,13,20,0.98);
+  border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;
+}
+.stats-header-top { display:flex;align-items:center;position:relative; }
+.stats-title { font-size:20px;font-weight:700;color:#fff;width:100%;text-align:center; }
+.stats-subtitle { font-size:13px;color:rgba(255,255,255,0.4);margin-top:4px;text-align:center; }
+.live-badge { background:#ff3b30;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:1px;animation:blink 1.5s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.5} }
+
+.stats-body { flex:1;overflow-y:auto;padding:16px 18px; }
+.stats-body::-webkit-scrollbar { display:none; }
+
+.stat-card {
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  border-radius:18px;padding:16px;margin-bottom:14px;
+}
+.stat-card-title { font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px; }
+.stat-big { font-size:36px;font-weight:700;color:#ff3b30;margin-bottom:2px; }
+.stat-delta { font-size:13px;color:rgba(255,80,80,0.8); }
+.stat-delta.up { color:#ff5555; } .stat-delta.down { color:#34c759; }
+
+.bar-chart { display:flex;align-items:flex-end;gap:5px;height:80px;margin-top:14px;padding:0 2px; }
+.bar-col { flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%; }
+.bar {
+  width:100%;border-radius:4px 4px 0 0;
+  background:linear-gradient(180deg,rgba(255,60,60,0.9),rgba(180,30,30,0.7));
+  min-height:4px;flex-shrink:0;
+}
+.bar-label { font-size:9px;color:rgba(255,255,255,0.4);flex-shrink:0; }
+
+.region-list { margin-top:6px; }
+.region-item {
+  display:flex;align-items:center;gap:10px;padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.region-item:last-child { border:none; }
+.region-name { font-size:14px;color:#fff;flex:1; }
+.region-bar-wrap { width:100px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden; }
+.region-bar { height:100%;background:linear-gradient(90deg,#ff3b30,#ff8c00);border-radius:3px; }
+.region-count { font-size:13px;color:rgba(255,100,100,0.9);font-weight:600;width:60px;text-align:right; }
+
+.refresh-btn {
+  width:100%;padding:12px;background:rgba(255,60,60,0.15);border:1px solid rgba(255,60,60,0.3);
+  border-radius:14px;color:#ff5555;font-size:15px;font-weight:600;cursor:pointer;margin-top:6px;margin-bottom:6px;
+  -webkit-tap-highlight-color:transparent;transition:background 0.15s;
+}
+.refresh-btn:active { background:rgba(255,60,60,0.25); }
+
+/* ── D-Day App ── */
+#app-dday {
+  background:#0c0a0a;display:flex;flex-direction:column;
+}
+
+.dday-header {
+  padding:56px 20px 16px;background:rgba(12,10,10,0.98);
+  border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;
+  display:flex;align-items:center;position:relative;
+}
+.dday-title { font-size:20px;font-weight:700;color:#fff;width:100%;text-align:center; }
+
+.dday-body { flex:1;overflow-y:auto;padding:20px 18px; }
+.dday-body::-webkit-scrollbar { display:none; }
+
+.dday-main {
+  background:linear-gradient(135deg,rgba(120,20,20,0.5),rgba(180,40,40,0.3));
+  border:1px solid rgba(200,50,50,0.4);
+  border-radius:24px;padding:28px 20px;text-align:center;margin-bottom:18px;
+  position:relative;overflow:hidden;
+}
+.dday-main::before {
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,80,80,0.1) 0%,transparent 70%);
+}
+.dday-label { font-size:13px;font-weight:700;color:rgba(255,150,150,0.8);text-transform:uppercase;letter-spacing:1.5px;position:relative; }
+.dday-number { font-size:88px;font-weight:800;color:#fff;line-height:1;position:relative;letter-spacing:-3px; }
+.dday-number span { color:#ff4444; }
+.dday-desc { font-size:15px;color:rgba(255,200,200,0.7);margin-top:6px;position:relative; }
+.dday-start-date { font-size:12px;color:rgba(255,150,150,0.5);margin-top:8px;position:relative; }
+
+.dday-stats-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px; }
+.dday-stat {
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  border-radius:16px;padding:16px;text-align:center;
+}
+.dday-stat-val { font-size:26px;font-weight:700;color:#fff;margin-bottom:4px; }
+.dday-stat-label { font-size:12px;color:rgba(255,255,255,0.4);font-weight:500; }
+
+.progress-section {
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:16px;padding:16px;
+}
+.progress-title { font-size:13px;font-weight:600;color:rgba(255,255,255,0.6);margin-bottom:12px; }
+.progress-row { display:flex;justify-content:space-between;align-items:center;margin-bottom:8px; }
+.progress-key { font-size:13px;color:rgba(255,255,255,0.7); }
+.progress-val { font-size:13px;color:#ff8888;font-weight:600; }
+.progress-bar-wrap { height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:12px; }
+.progress-bar { height:100%;background:linear-gradient(90deg,#c0392b,#e74c3c);border-radius:3px;transition:width 1s ease; }
+
+.home-indicator { position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:134px;height:5px;background:rgba(255,255,255,0.3);border-radius:3px; }
+
+
+</style>
+</head>
+<body>
+<div class="iphone">
+  <div class="vol-down"></div>
+  <div class="mute"></div>
+  <div class="dynamic-island"></div>
+
+  <!-- STATUS BAR (shared, always on top) -->
+  <div class="status-bar" id="main-status">
+    <!-- LEFT: time -->
+    <div class="status-left-time">
+      <span id="status-time" style="font-size:15px;font-weight:600"></span>
+    </div>
+    <!-- RIGHT: wifi + signal bars + battery% + battery icon -->
+    <div class="status-right">
+      <div class="sig"><span></span><span></span><span></span><span></span></div>
+      <span style="font-size:12px;font-weight:500">73%</span>
+      <div class="bat-icon"><div class="bat-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- ══ LOCK SCREEN ══ -->
+  <div class="screen" id="lock-screen">
+    <div class="lock-bg"></div>
+    <div class="fog-particles" id="fog-particles"></div>
+
+    <div class="time-wrap">
+      <div class="lock-time" id="lock-time"></div>
+      <div class="lock-date" id="lock-date"></div>
+    </div>
+
+    <div class="notif-area">
+      <div class="notif-card">
+        <div class="notif-head">
+          <div class="notif-icon">⚠️</div>
+          <div>
+            <div class="notif-app">긴급재난문자</div>
+            <div class="notif-when">방금 전</div>
+          </div>
+        </div>
+        <div class="notif-title">[행정안전부] 긴급 안전 안내</div>
+        <div class="notif-body">원인 불명 '광증 안개' 전국 확산, 외출 즉시 중단 및 밀폐 공간 대피 바랍니다. 안개 노출자 접근 금지, 이상 행동 발견 시 119·감염 통제 사령부로 즉시 신고하십시오.</div>
+      </div>
+    </div>
+
+    <div class="swipe-hint" id="swipe-hint">
+      <div class="swipe-arrow">↑</div>
+      <span>위로 쓸어올려 잠금 해제</span>
+    </div>
+    <div class="home-indicator-lock"></div>
+  </div>
+
+  <!-- ══ PASSCODE SCREEN ══ -->
+  <div class="screen hidden" id="passcode-screen">
+    <div class="passcode-title">암호 입력</div>
+    <div class="dots">
+      <div class="dot" id="d0"></div>
+      <div class="dot" id="d1"></div>
+      <div class="dot" id="d2"></div>
+      <div class="dot" id="d3"></div>
+    </div>
+    <div class="keypad">
+      <button class="key" data-val="1">1<span class="key-sub"></span></button>
+      <button class="key" data-val="2">2<span class="key-sub">ABC</span></button>
+      <button class="key" data-val="3">3<span class="key-sub">DEF</span></button>
+      <button class="key" data-val="4">4<span class="key-sub">GHI</span></button>
+      <button class="key" data-val="5">5<span class="key-sub">JKL</span></button>
+      <button class="key" data-val="6">6<span class="key-sub">MNO</span></button>
+      <button class="key" data-val="7">7<span class="key-sub">PQRS</span></button>
+      <button class="key" data-val="8">8<span class="key-sub">TUV</span></button>
+      <button class="key" data-val="9">9<span class="key-sub">WXYZ</span></button>
+      <button class="key key-empty" data-val=""></button>
+      <button class="key" data-val="0">0<span class="key-sub"></span></button>
+      <button class="key key-del" data-val="del">⌫</button>
+    </div>
+    <div class="emergency-text">긴급 전화</div>
+  </div>
+
+  <!-- ══ HOME SCREEN ══ -->
+  <div class="screen" id="home-screen" style="transform:translateY(100%);pointer-events:none;">
+    <div class="home-bg"></div>
+    <div class="home-content">
+      <div class="app-grid">
+
+        <!-- Messages -->
+        <div class="app-icon-wrap" id="open-messages">
+          <div class="app-icon app-messages" style="position:relative;">
+            💬
+            <div class="notif-badge">1</div>
+          </div>
+          <div class="app-label">문자</div>
+        </div>
+
+        <!-- Stats -->
+        <div class="app-icon-wrap" id="open-stats">
+          <div class="app-icon app-stats">📊</div>
+          <div class="app-label">감염 현황</div>
+        </div>
+
+        <!-- D-Day -->
+        <div class="app-icon-wrap" id="open-dday">
+          <div class="app-icon app-dday">💀</div>
+          <div class="app-label">D-Day</div>
+        </div>
+
+        <!-- 무선 통신 -->
+        <div class="app-icon-wrap" id="open-radio">
+          <div class="app-icon app-radio">📟</div>
+          <div class="app-label">무선 통신</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="home-dock">
+      <div class="app-icon-wrap" id="open-messages-dock" style="margin:0">
+        <div class="app-icon app-messages" style="width:56px;height:56px;font-size:26px;position:relative;">
+          💬<div class="notif-badge" style="font-size:10px;min-width:16px;height:16px;">1</div>
+        </div>
+      </div>
+    </div>
+    <div class="home-indicator"></div>
+  </div>
+
+  <!-- ══ APP: 무선 통신 ══ -->
+  <div class="app-screen" id="app-radio">
+    <div class="app-nav" style="background:rgba(28,10,50,0.97);">
+      <button class="back-btn" id="back-from-radio">‹ 뒤로</button>
+      <div class="app-nav-title">무선 통신</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px;background:#0a0014;">
+      <div style="font-size:64px">📡</div>
+      <div style="font-size:18px;font-weight:700;color:#fff;text-align:center">무선 통신 채널</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);text-align:center;line-height:1.6">암호화된 외부 채널입니다.<br>외부 앱에서 열립니다.</div>
+      <a href="https://ko.cvdk.io/c/Y6qYj7UNRrC5zNIArggifw?rc=WV5cHuawOk" target="_blank"
+        style="background:linear-gradient(135deg,#4a2080,#8e44ad);color:#fff;font-size:16px;font-weight:700;
+        padding:16px 36px;border-radius:20px;text-decoration:none;letter-spacing:0.5px;
+        box-shadow:0 4px 20px rgba(142,68,173,0.5);">
+        채널 접속 →
+      </a>
+    </div>
+  </div>
+  <div class="app-screen" id="app-messages">
+    <div class="app-nav">
+      <button class="back-btn" id="back-from-messages">‹ 뒤로</button>
+      <div class="app-nav-title">문자 메시지</div>
+    </div>
+    <div class="msg-list">
+      <div class="msg-item" id="open-convo-gov">
+        <div class="msg-avatar gov">🏛</div>
+        <div class="msg-info">
+          <div class="msg-name">[긴급재난문자]</div>
+          <div class="msg-preview">원인 불명 '광증 안개' 전국 확산…</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <div class="msg-time">19:24</div>
+          <div class="unread-dot"></div>
+        </div>
+      </div>
+      <div class="msg-item" style="opacity:0.5">
+        <div class="msg-avatar" style="background:linear-gradient(135deg,#2d6ae0,#5b8dee);font-size:18px;font-weight:600">친</div>
+        <div class="msg-info">
+          <div class="msg-name">친구</div>
+          <div class="msg-preview">너 지금 어디야? 연락해</div>
+        </div>
+        <div class="msg-time">17:40</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CONVO: 재난문자 ══ -->
+  <div class="app-screen" id="app-convo">
+    <div class="convo-nav">
+      <button class="back-btn" id="back-from-convo">‹</button>
+      <div class="convo-center">
+        <div class="convo-info">
+          <div class="convo-name">[긴급재난문자]</div>
+          <div class="convo-status">행정안전부 · 감염 통제 사령부</div>
+        </div>
+      </div>
+    </div>
+    <div class="convo-body" id="convo-body">
+      <div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.3);padding:10px 0">2025년 5월 3일 오전 6:00</div>
+      <div class="bubble-wrap system-wrap">
+        <div class="bubble system">⚠️ 정부 공식 채널 — 이 번호로 회신하지 마십시오</div>
+      </div>
+      <div class="bubble-wrap theirs">
+        <div class="bubble theirs">[행정안전부] D+1 안내: 광증 안개 발생 최초 확인. 원인 조사 중. 실내 대피 유지하십시오.</div>
+        <div class="bubble-time">오전 6:00</div>
+      </div>
+      <div class="bubble-wrap theirs">
+        <div class="bubble theirs">[감염 통제 사령부] 군 방역 기동대가 주요 도로를 통제합니다. 지시 없이 외출 시 즉각 격리 조치됩니다.</div>
+        <div class="bubble-time">오후 2:17</div>
+      </div>
+      <div class="bubble-wrap theirs">
+        <div class="bubble theirs">[행정안전부] 광증 안개 노출자: 시야 흐림, 극도의 공격성, 언어 기능 소실 등 증상 발현. 즉시 119에 신고하십시오.</div>
+        <div class="bubble-time">오후 3:45</div>
+      </div>
+      <div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.3);padding:10px 0">오늘</div>
+      <div class="bubble-wrap theirs">
+        <div class="bubble theirs">[행정안전부] ⚠️ 긴급: 원인 불명 '광증 안개' 전국 확산. 외출 즉시 중단 및 밀폐 공간 대피 바랍니다. 안개 노출자 접근 금지. 이상 행동 발견 시 119·감염 통제 사령부로 즉시 신고하십시오.</div>
+        <div class="bubble-time">오후 7:24</div>
+      </div>
+    </div>
+    <div class="convo-input-wrap">
+      <input class="convo-input" placeholder="메시지" readonly>
+      <button class="send-btn" style="background:rgba(255,255,255,0.1);cursor:default">↑</button>
+    </div>
+  </div>
+
+  <!-- ══ APP: STATS ══ -->
+  <div class="app-screen" id="app-stats">
+    <div class="stats-header">
+      <div class="stats-header-top">
+        <button class="back-btn" id="back-from-stats">‹ 뒤로</button>
+        <div class="stats-title">감염 현황</div>
+        <div class="live-badge" style="position:absolute;right:20px">LIVE</div>
+      </div>
+      <div class="stats-subtitle" id="stats-updated">마지막 업데이트: 방금 전</div>
+    </div>
+    <div class="stats-body">
+      <div class="stat-card">
+        <div class="stat-card-title">총 감염 확인자</div>
+        <div class="stat-big" id="total-infected">—</div>
+        <div class="stat-delta up" id="delta-infected">↑ 로딩 중...</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-title">일별 신규 감염 (최근 7일)</div>
+        <div class="bar-chart" id="bar-chart"></div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-title">지역별 현황</div>
+        <div class="region-list" id="region-list"></div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-title">군 격리 현황</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+          <div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:#ff8c00" id="stat-quarantine">—</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px">격리 중</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:#ff3b30" id="stat-executed">—</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px">군 처형</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="refresh-btn" id="refresh-stats">↻ 데이터 새로고침</button>
+    </div>
+  </div>
+
+  <!-- ══ APP: D-DAY ══ -->
+  <div class="app-screen" id="app-dday">
+    <div class="dday-header">
+      <button class="back-btn" id="back-from-dday">‹ 뒤로</button>
+      <div class="dday-title">광증 안개 D-Day</div>
+    </div>
+    <div class="dday-body">
+      <div class="dday-main">
+        <div class="dday-label">광증 안개 발생</div>
+        <div class="dday-number" id="dday-number">D+<span id="dday-val">0</span></div>
+        <div class="dday-desc">감염 사태 지속 중</div>
+        <div class="dday-start-date">2025년 5월 3일 시작</div>
+      </div>
+
+      <div class="dday-stats-grid">
+        <div class="dday-stat">
+          <div class="dday-stat-val" id="dday-weeks">—</div>
+          <div class="dday-stat-label">경과 주</div>
+        </div>
+        <div class="dday-stat">
+          <div class="dday-stat-val" id="dday-hours">—</div>
+          <div class="dday-stat-label">경과 시간</div>
+        </div>
+        <div class="dday-stat">
+          <div class="dday-stat-val" id="dday-today">오늘</div>
+          <div class="dday-stat-label">현재 날짜</div>
+        </div>
+        <div class="dday-stat">
+          <div class="dday-stat-val" style="color:#ff4444" id="dday-phase">—</div>
+          <div class="dday-stat-label">감염 단계</div>
+        </div>
+      </div>
+
+      <div class="progress-section">
+        <div class="progress-title">감염 사태 경고 레벨</div>
+        <div class="progress-row">
+          <span class="progress-key">현재 단계</span>
+          <span class="progress-val" id="progress-level">심각</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.3)">
+          <span>관심</span><span>주의</span><span>경계</span><span>심각</span>
+        </div>
+
+        <div style="margin-top:14px">
+          <div class="progress-row" style="margin-bottom:4px">
+            <span class="progress-key" style="font-size:12px">초기 발생</span>
+            <span class="progress-val" style="font-size:12px">2025.05.03</span>
+          </div>
+          <div class="progress-row" style="margin-bottom:4px">
+            <span class="progress-key" style="font-size:12px">전국 확산 선언</span>
+            <span class="progress-val" style="font-size:12px">2025.05.07</span>
+          </div>
+          <div class="progress-row">
+            <span class="progress-key" style="font-size:12px">군 계엄 발동</span>
+            <span class="progress-val" style="font-size:12px">2025.05.10</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="home-indicator" style="z-index:9998"></div>
+
+
+
+</div>
+
+<script>
+/* ─── TIME ─── */
+function updateTime() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const t = `${hh}:${mm}`;
+  document.getElementById('lock-time').textContent = t;
+  document.getElementById('status-time').textContent = t;
+
+  const days = ['일','월','화','수','목','금','토'];
+  document.getElementById('lock-date').textContent =
+    `${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+}
+updateTime(); setInterval(updateTime, 1000);
+
+/* ─── LOCK SCREEN NOTIF TAP BOUNCE ─── */
+const lockNotifCard = document.querySelector('.notif-card');
+lockNotifCard.style.cursor = 'pointer';
+lockNotifCard.addEventListener('click', () => {
+  lockNotifCard.classList.remove('tapping');
+  void lockNotifCard.offsetWidth; // force reflow
+  lockNotifCard.classList.add('tapping');
+  lockNotifCard.addEventListener('animationend', () => lockNotifCard.classList.remove('tapping'), {once:true});
+});
+
+/* ─── FOG PARTICLES ─── */
+const fogContainer = document.getElementById('fog-particles');
+for (let i = 0; i < 30; i++) {
+  const p = document.createElement('div');
+  p.className = 'fog-p';
+  p.style.left = Math.random()*100 + '%';
+  p.style.bottom = -10 + 'px';
+  p.style.setProperty('--dx', (Math.random()*60-30) + 'px');
+  p.style.animationDuration = (4+Math.random()*6) + 's';
+  p.style.animationDelay = (Math.random()*8) + 's';
+  p.style.opacity = Math.random()*0.5;
+  fogContainer.appendChild(p);
+}
+
+/* ─── SCREEN MANAGEMENT ─── */
+const screens = {
+  lock: document.getElementById('lock-screen'),
+  passcode: document.getElementById('passcode-screen'),
+  home: document.getElementById('home-screen'),
+};
+
+function showPasscode() {
+  screens.lock.classList.add('slide-up');
+  screens.passcode.classList.remove('hidden');
+  screens.passcode.style.transform = 'translateY(0)';
+}
+
+function showHome() {
+  screens.passcode.classList.add('hidden');
+  screens.home.style.transform = 'translateY(0)';
+  screens.home.style.pointerEvents = 'all';
+}
+
+function goHome() {
+  closeAllApps();
+  setTimeout(() => {}, 50);
+}
+
+/* ─── SWIPE / CLICK TO UNLOCK ─── */
+let touchStartY = null;
+const lockScreen = screens.lock;
+
+lockScreen.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; });
+lockScreen.addEventListener('touchend', e => {
+  if (touchStartY !== null) {
+    const dy = touchStartY - e.changedTouches[0].clientY;
+    if (dy > 50) showPasscode();
+    touchStartY = null;
+  }
+});
+document.getElementById('swipe-hint').addEventListener('click', showPasscode);
+lockScreen.addEventListener('mousedown', e => { touchStartY = e.clientY; });
+lockScreen.addEventListener('mouseup', e => {
+  if (touchStartY !== null && touchStartY - e.clientY > 30) showPasscode();
+  touchStartY = null;
+});
+
+/* ─── PASSCODE LOGIC ─── */
+let code = '';
+const CORRECT = '0000';
+
+function updateDots() {
+  for (let i=0;i<4;i++) {
+    const d = document.getElementById('d'+i);
+    d.classList.toggle('filled', i < code.length);
+    d.classList.remove('error');
+  }
+}
+
+function shakeError() {
+  for (let i=0;i<4;i++) {
+    const d = document.getElementById('d'+i);
+    d.classList.add('error','shake');
+    setTimeout(()=>{ d.classList.remove('shake'); d.classList.remove('error');}, 500);
+  }
+  code = '';
+  setTimeout(updateDots, 500);
+}
+
+document.querySelectorAll('.key').forEach(key => {
+  key.addEventListener('click', () => {
+    const v = key.dataset.val;
+    if (v === '') return;
+    key.classList.add('pressed');
+    setTimeout(()=>key.classList.remove('pressed'), 120);
+
+    if (v === 'del') {
+      code = code.slice(0,-1);
+    } else if (code.length < 4) {
+      code += v;
+    }
+    updateDots();
+
+    if (code.length === 4) {
+      if (code === CORRECT) {
+        setTimeout(showHome, 300);
+      } else {
+        setTimeout(shakeError, 200);
+      }
+    }
+  });
+});
+
+/* ─── APP OPEN/CLOSE ─── */
+function openApp(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeApp(id) {
+  document.getElementById(id).classList.remove('open');
+}
+function closeAllApps() {
+  ['app-messages','app-convo','app-stats','app-dday','app-radio'].forEach(closeApp);
+}
+
+document.getElementById('open-messages').addEventListener('click', ()=>openApp('app-messages'));
+document.getElementById('open-messages-dock').addEventListener('click', ()=>openApp('app-messages'));
+document.getElementById('open-stats').addEventListener('click', ()=>{ openApp('app-stats'); loadStats(); });
+document.getElementById('open-dday').addEventListener('click', ()=>{ openApp('app-dday'); loadDday(); });
+
+document.getElementById('back-from-messages').addEventListener('click', ()=>closeApp('app-messages'));
+document.getElementById('back-from-stats').addEventListener('click', ()=>closeApp('app-stats'));
+document.getElementById('back-from-dday').addEventListener('click', ()=>closeApp('app-dday'));
+document.getElementById('back-from-convo').addEventListener('click', ()=>closeApp('app-convo'));
+document.getElementById('open-radio').addEventListener('click', () => openApp('app-radio'));
+document.getElementById('back-from-radio').addEventListener('click', () => closeApp('app-radio'));
+
+document.getElementById('open-convo-gov').addEventListener('click', ()=>{
+  document.querySelector('#open-messages .notif-badge').style.display='none';
+  document.querySelector('#open-messages-dock .notif-badge').style.display='none';
+  document.querySelector('.unread-dot').style.display='none';
+  openApp('app-convo');
+});
+
+/* ─── STATS DATA ─── */
+function rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+function loadStats() {
+  const total = rnd(12000, 40000);
+  const delta = rnd(800, 4500);
+  document.getElementById('total-infected').textContent = total.toLocaleString('ko-KR');
+  document.getElementById('delta-infected').textContent = `↑ 오늘 +${delta.toLocaleString('ko-KR')}명 신규 확인`;
+
+  // Bar chart - use pixel heights
+  const chart = document.getElementById('bar-chart');
+  chart.innerHTML = '';
+  const labels = ['월','화','수','목','금','토','일'];
+  const vals = Array.from({length:7}, () => rnd(500, 5000));
+  const maxV = Math.max(...vals);
+  const chartH = 62; // px available for bars (80px total - 14px for label - 4px gap)
+  labels.forEach((l, i) => {
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    const barH = Math.max(4, Math.round((vals[i] / maxV) * chartH));
+    col.innerHTML = `<div class="bar" style="height:${barH}px"></div><div class="bar-label">${l}</div>`;
+    chart.appendChild(col);
+  });
+
+  // Regions
+  const regions = [
+    {name:'서울',base:8000},
+    {name:'경기',base:6000},
+    {name:'인천',base:3000},
+    {name:'부산',base:2500},
+    {name:'대구',base:1800},
+    {name:'광주',base:1200},
+  ];
+  const regionList = document.getElementById('region-list');
+  regionList.innerHTML = '';
+  const maxR = regions[0].base;
+  regions.forEach(r=>{
+    const cnt = r.base + rnd(-500,500);
+    const pct = (cnt/maxR*100);
+    const el = document.createElement('div');
+    el.className = 'region-item';
+    el.innerHTML = `<div class="region-name">${r.name}</div><div class="region-bar-wrap"><div class="region-bar" style="width:${pct}%"></div></div><div class="region-count">${cnt.toLocaleString('ko-KR')}</div>`;
+    regionList.appendChild(el);
+  });
+
+  document.getElementById('stat-quarantine').textContent = rnd(2000,8000).toLocaleString('ko-KR');
+  document.getElementById('stat-executed').textContent = rnd(50,300).toLocaleString('ko-KR');
+  document.getElementById('stats-updated').textContent = '마지막 업데이트: 방금 전';
+}
+
+document.getElementById('refresh-stats').addEventListener('click', ()=>{
+  document.getElementById('total-infected').textContent = '...';
+  setTimeout(loadStats, 600);
+});
+
+
+
+function loadDday() {
+  // 2025-05-03 is D+1, so we subtract 1 from actual elapsed days
+  const start = new Date('2025-05-02T00:00:00'); // shift back 1 day so May 3 = D+1
+  const now = new Date();
+  const diffMs = now - start;
+  const diffDays = Math.floor(diffMs / (1000*60*60*24));
+  const diffHours = Math.floor(diffMs / (1000*60*60));
+  const diffWeeks = Math.floor(diffDays / 7);
+
+  document.getElementById('dday-val').textContent = diffDays;
+  document.getElementById('dday-weeks').textContent = diffWeeks + '주';
+  document.getElementById('dday-hours').textContent = diffHours.toLocaleString('ko-KR') + 'h';
+
+  const today = now;
+  document.getElementById('dday-today').textContent =
+    `${today.getMonth()+1}/${today.getDate()}`;
+
+  let phase, pct;
+  if (diffDays < 7) { phase='초기'; pct=25; }
+  else if (diffDays < 30) { phase='확산'; pct=50; }
+  else if (diffDays < 90) { phase='심각'; pct=75; }
+  else { phase='파국'; pct=100; }
+
+  document.getElementById('dday-phase').textContent = phase;
+  document.getElementById('progress-level').textContent = phase;
+  setTimeout(()=>{ document.getElementById('progress-bar').style.width = pct+'%'; }, 200);
+}
+</script>
+</body>
+</html>
