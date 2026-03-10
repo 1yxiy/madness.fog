@@ -27,6 +27,7 @@ body {
   border:14px solid #1a1a1a;
   box-shadow:0 0 0 1px #333, 0 30px 80px rgba(0,0,0,0.8), inset 0 0 0 1px #444;
   flex-shrink:0;
+  isolation:isolate;
 }
 
 .iphone::before { /* power button */
@@ -193,6 +194,8 @@ body {
 .app-stats { background:linear-gradient(135deg,#1c3a6b,#2d6ae0); }
 .app-dday { background:linear-gradient(135deg,#7b1a1a,#c0392b); }
 .app-radio { background:linear-gradient(135deg,#4a2080,#8e44ad); }
+.app-profile { background:linear-gradient(135deg,#7b0000,#c0392b); }
+.app-pair { background:linear-gradient(135deg,#8b004a,#e91e8c); }
 
 .app-label { font-size:12px;color:rgba(255,255,255,0.8);font-weight:500;text-align:center; }
 
@@ -388,44 +391,58 @@ body {
 }
 .refresh-btn:active { background:rgba(255,60,60,0.25); }
 
-/* ── D-Day App ── */
-#app-dday {
-  background:#0c0a0a;display:flex;flex-direction:column;
-}
-
-.dday-header {
-  padding:56px 20px 16px;background:rgba(12,10,10,0.98);
-  border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;
-  display:flex;align-items:center;position:relative;
-}
-.dday-title { font-size:20px;font-weight:700;color:#fff;width:100%;text-align:center; }
-
-.dday-body { flex:1;overflow-y:auto;padding:20px 18px; }
-.dday-body::-webkit-scrollbar { display:none; }
-
-.dday-main {
-  background:linear-gradient(135deg,rgba(120,20,20,0.5),rgba(180,40,40,0.3));
-  border:1px solid rgba(200,50,50,0.4);
-  border-radius:24px;padding:28px 20px;text-align:center;margin-bottom:18px;
-  position:relative;overflow:hidden;
-}
-.dday-main::before {
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,80,80,0.1) 0%,transparent 70%);
-}
-.dday-label { font-size:13px;font-weight:700;color:rgba(255,150,150,0.8);text-transform:uppercase;letter-spacing:1.5px;position:relative; }
-.dday-number { font-size:88px;font-weight:800;color:#fff;line-height:1;position:relative;letter-spacing:-3px; }
-.dday-number span { color:#ff4444; }
-.dday-desc { font-size:15px;color:rgba(255,200,200,0.7);margin-top:6px;position:relative; }
-.dday-start-date { font-size:12px;color:rgba(255,150,150,0.5);margin-top:8px;position:relative; }
-
-.dday-stats-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px; }
-.dday-stat {
+/* ── 인물 소개 App ── */
+#app-profile { background:#0d0008;display:flex;flex-direction:column; }
+.profile-body { flex:1;overflow-y:auto;padding:16px 16px 30px; }
+.profile-body::-webkit-scrollbar { display:none; }
+.profile-card {
   background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
-  border-radius:16px;padding:16px;text-align:center;
+  border-radius:18px;margin-bottom:12px;overflow:hidden;cursor:pointer;
+  transition:background 0.15s;
 }
-.dday-stat-val { font-size:26px;font-weight:700;color:#fff;margin-bottom:4px; }
-.dday-stat-label { font-size:12px;color:rgba(255,255,255,0.4);font-weight:500; }
+.profile-card:active { background:rgba(255,255,255,0.09); }
+.profile-card-header {
+  padding:16px 18px;display:flex;align-items:center;justify-content:space-between;
+}
+.profile-card-left { display:flex;align-items:center;gap:12px; }
+.profile-avatar {
+  width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.profile-name { font-size:16px;font-weight:700;color:#fff; }
+.profile-rank { font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px; }
+.profile-chevron { font-size:14px;color:rgba(255,255,255,0.3);transition:transform 0.25s; }
+.profile-card.open .profile-chevron { transform:rotate(90deg); }
+.profile-desc {
+  max-height:0;overflow:hidden;transition:max-height 0.35s ease, padding 0.25s;
+  padding:0 18px;font-size:14px;line-height:1.7;color:rgba(255,255,255,0.7);
+  border-top:0px solid rgba(255,255,255,0.08);
+}
+.profile-card.open .profile-desc {
+  max-height:300px;padding:14px 18px 18px;
+  border-top:1px solid rgba(255,255,255,0.08);
+}
+
+/* ── 페어 App ── */
+#app-pair { background:#12000a;display:flex;flex-direction:column; }
+.pair-body { flex:1;overflow-y:auto;padding:20px 18px 30px; }
+.pair-body::-webkit-scrollbar { display:none; }
+.pair-dday-card {
+  background:linear-gradient(135deg,rgba(180,40,100,0.4),rgba(100,20,60,0.3));
+  border:1px solid rgba(220,80,140,0.4);border-radius:22px;
+  padding:24px 20px;text-align:center;margin-bottom:16px;
+}
+.pair-dday-label { font-size:12px;font-weight:700;color:rgba(255,180,210,0.7);letter-spacing:1.5px;text-transform:uppercase; }
+.pair-dday-num { font-size:72px;font-weight:800;color:#fff;letter-spacing:-2px;line-height:1; }
+.pair-dday-num span { color:#ff6eb0; }
+.pair-dday-sub { font-size:13px;color:rgba(255,180,210,0.6);margin-top:6px; }
+.pair-char-card {
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);
+  border-radius:18px;padding:18px;margin-bottom:12px;
+}
+.pair-char-name { font-size:17px;font-weight:700;color:#fff;margin-bottom:10px; }
+.pair-char-body { font-size:13.5px;line-height:1.75;color:rgba(255,255,255,0.65); }
+
 
 .progress-section {
   background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
@@ -541,16 +558,22 @@ body {
           <div class="app-label">감염 현황</div>
         </div>
 
-        <!-- D-Day -->
-        <div class="app-icon-wrap" id="open-dday">
-          <div class="app-icon app-dday">💀</div>
-          <div class="app-label">D-Day</div>
-        </div>
-
         <!-- 무선 통신 -->
         <div class="app-icon-wrap" id="open-radio">
           <div class="app-icon app-radio">📟</div>
           <div class="app-label">무선 통신</div>
+        </div>
+
+        <!-- 인물 소개 -->
+        <div class="app-icon-wrap" id="open-profile">
+          <div class="app-icon app-profile">🧭</div>
+          <div class="app-label">인물 소개</div>
+        </div>
+
+        <!-- 페어 -->
+        <div class="app-icon-wrap" id="open-pair">
+          <div class="app-icon app-pair">❤️</div>
+          <div class="app-label">페어</div>
         </div>
 
       </div>
@@ -584,6 +607,8 @@ body {
       </a>
     </div>
   </div>
+
+  <!-- ══ APP: MESSAGES ══ -->
   <div class="app-screen" id="app-messages">
     <div class="app-nav">
       <button class="back-btn" id="back-from-messages">‹ 뒤로</button>
@@ -605,7 +630,7 @@ body {
         <div class="msg-avatar" style="background:linear-gradient(135deg,#2d6ae0,#5b8dee);font-size:18px;font-weight:600">친</div>
         <div class="msg-info">
           <div class="msg-name">친구</div>
-          <div class="msg-preview">너 지금 어디야? 살아있으면 연락해.</div>
+          <div class="msg-preview">너 지금 어디야? 연락해</div>
         </div>
         <div class="msg-time">17:40</div>
       </div>
@@ -624,12 +649,12 @@ body {
       </div>
     </div>
     <div class="convo-body" id="convo-body">
-      <div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.3);padding:10px 0">2025년 5월 3일 오전 6:00</div>
+
       <div class="bubble-wrap system-wrap">
         <div class="bubble system">⚠️ 정부 공식 채널 — 이 번호로 회신하지 마십시오</div>
       </div>
       <div class="bubble-wrap theirs">
-        <div class="bubble theirs">[행정안전부] 안내: 광증 안개 발생 최초 확인. 원인 조사 중. 실내 대피 유지하십시오.</div>
+        <div class="bubble theirs">[행정안전부] D+1 안내: 광증 안개 발생 최초 확인. 원인 조사 중. 실내 대피 유지하십시오.</div>
         <div class="bubble-time">오전 6:00</div>
       </div>
       <div class="bubble-wrap theirs">
@@ -693,79 +718,131 @@ body {
         </div>
       </div>
 
+      <div class="stat-card" id="alert-level-card">
+        <div class="stat-card-title">감염 사태 경고 레벨</div>
+        <div class="progress-row" style="margin-bottom:8px">
+          <span class="progress-key">현재 단계</span>
+          <span class="progress-val" id="progress-level">파국</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="progress-bar" style="width:100%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:12px">
+          <span>관심</span><span>주의</span><span>경계</span><span>심각</span>
+        </div>
+        <div class="progress-row" style="margin-bottom:4px">
+          <span class="progress-key" style="font-size:12px">초기 발생</span>
+          <span class="progress-val" style="font-size:12px">2XXX.XX.XX</span>
+        </div>
+        <div class="progress-row" style="margin-bottom:4px">
+          <span class="progress-key" style="font-size:12px">전국 확산 선언</span>
+          <span class="progress-val" style="font-size:12px">2XXX.XX.XX</span>
+        </div>
+        <div class="progress-row">
+          <span class="progress-key" style="font-size:12px">군 계엄 발동</span>
+          <span class="progress-val" style="font-size:12px">2XXX.XX.XX</span>
+        </div>
+      </div>
       <button class="refresh-btn" id="refresh-stats">↻ 데이터 새로고침</button>
     </div>
   </div>
+  <div class="home-indicator" style="z-index:9998"></div>
 
-  <!-- ══ APP: D-DAY ══ -->
-  <div class="app-screen" id="app-dday">
-    <div class="dday-header">
-      <button class="back-btn" id="back-from-dday">‹ 뒤로</button>
-      <div class="dday-title">광증 안개 D-Day</div>
+  <!-- ══ APP: 인물 소개 ══ -->
+  <div class="app-screen" id="app-profile">
+    <div class="app-nav" style="background:rgba(13,0,8,0.97);">
+      <button class="back-btn" id="back-from-profile">‹ 뒤로</button>
+      <div class="app-nav-title">인물 소개</div>
     </div>
-    <div class="dday-body">
-      <div class="dday-main">
-        <div class="dday-label">광증 안개 발생</div>
-        <div class="dday-number" id="dday-number">D+<span id="dday-val">0</span></div>
-        <div class="dday-desc">감염 사태 지속 중</div>
-        <div class="dday-start-date">2025년 5월 3일 시작</div>
+    <div class="profile-body">
+
+      <div class="profile-card" data-id="noh">
+        <div class="profile-card-header">
+          <div class="profile-card-left">
+            <div class="profile-avatar" style="background:linear-gradient(135deg,#1c3a6b,#2d6ae0)">시</div>
+            <div>
+              <div class="profile-name">노시훈</div>
+              <div class="profile-rank">대위</div>
+            </div>
+          </div>
+          <div class="profile-chevron">›</div>
+        </div>
+        <div class="profile-desc">끊임없이 무너지는 결핍된 완벽주의자. 그녀를 사살하라는 명령을 받았지만, 차마 죽이지 못하고 그녀와 함께 동행 중.</div>
       </div>
 
-      <div class="dday-stats-grid">
-        <div class="dday-stat">
-          <div class="dday-stat-val" id="dday-weeks">—</div>
-          <div class="dday-stat-label">경과 주</div>
+      <div class="profile-card" data-id="seo">
+        <div class="profile-card-header">
+          <div class="profile-card-left">
+            <div class="profile-avatar" style="background:linear-gradient(135deg,#1a6b3a,#2de070)">아</div>
+            <div>
+              <div class="profile-name">서아영</div>
+              <div class="profile-rank">중위</div>
+            </div>
+          </div>
+          <div class="profile-chevron">›</div>
         </div>
-        <div class="dday-stat">
-          <div class="dday-stat-val" id="dday-hours">—</div>
-          <div class="dday-stat-label">경과 시간</div>
-        </div>
-        <div class="dday-stat">
-          <div class="dday-stat-val" id="dday-today">오늘</div>
-          <div class="dday-stat-label">현재 날짜</div>
-        </div>
-        <div class="dday-stat">
-          <div class="dday-stat-val" style="color:#ff4444" id="dday-phase">—</div>
-          <div class="dday-stat-label">감염 단계</div>
-        </div>
+        <div class="profile-desc">자신을 내던지는 위태로운 이타주의자. 과거의 일을 겪고 난 이후, 탈영함. 현재는 감염자로 오인.</div>
       </div>
 
-      <div class="progress-section">
-        <div class="progress-title">감염 사태 경고 레벨</div>
-        <div class="progress-row">
-          <span class="progress-key">현재 단계</span>
-          <span class="progress-val" id="progress-level">심각</span>
-        </div>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar" id="progress-bar" style="width:0%"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.3)">
-          <span>관심</span><span>주의</span><span>경계</span><span>심각</span>
-        </div>
-
-        <div style="margin-top:14px">
-          <div class="progress-row" style="margin-bottom:4px">
-            <span class="progress-key" style="font-size:12px">초기 발생</span>
-            <span class="progress-val" style="font-size:12px">2025.05.03</span>
+      <div class="profile-card" data-id="yeon">
+        <div class="profile-card-header">
+          <div class="profile-card-left">
+            <div class="profile-avatar" style="background:linear-gradient(135deg,#6b1a1a,#e03030)">모</div>
+            <div>
+              <div class="profile-name">연모한</div>
+              <div class="profile-rank">상사</div>
+            </div>
           </div>
-          <div class="progress-row" style="margin-bottom:4px">
-            <span class="progress-key" style="font-size:12px">전국 확산 선언</span>
-            <span class="progress-val" style="font-size:12px">2025.05.07</span>
-          </div>
-          <div class="progress-row">
-            <span class="progress-key" style="font-size:12px">군 계엄 발동</span>
-            <span class="progress-val" style="font-size:12px">2025.05.10</span>
-          </div>
+          <div class="profile-chevron">›</div>
         </div>
+        <div class="profile-desc">감염자 사살을 '사냥'으로 즐기는 소시오패스. 감정적 동요를 보이는 시훈을 경멸하며, 그의 망설임을 부추김.</div>
       </div>
+
+      <div class="profile-card" data-id="heo">
+        <div class="profile-card-header">
+          <div class="profile-card-left">
+            <div class="profile-avatar" style="background:linear-gradient(135deg,#4a4a00,#b0a800)">태</div>
+            <div>
+              <div class="profile-name">허태준</div>
+              <div class="profile-rank">대령</div>
+            </div>
+          </div>
+          <div class="profile-chevron">›</div>
+        </div>
+        <div class="profile-desc">철저한 결과 중심주의자. 무언가의 대가로 그를 효과적인 '도구'로 사용. 그의 트라우마를 자극하여 통제함.</div>
+      </div>
+
     </div>
   </div>
 
-  <div class="home-indicator" style="z-index:9998"></div>
+  <!-- ══ APP: 페어 ══ -->
+  <div class="app-screen" id="app-pair">
+    <div class="app-nav" style="background:rgba(18,0,10,0.97);">
+      <button class="back-btn" id="back-from-pair">‹ 뒤로</button>
+      <div class="app-nav-title">페어</div>
+    </div>
+    <div class="pair-body">
 
+      <div class="pair-dday-card">
+        <div class="pair-dday-label">함께한 지</div>
+        <div class="pair-dday-num">D+<span id="pair-dday-val">—</span></div>
+        <div class="pair-dday-sub">2XXX년 X월 X일부터</div>
+      </div>
 
+      <div class="pair-char-card">
+        <div class="pair-char-name">🔫 노시훈</div>
+        <div class="pair-char-body">넓은 어깨와 각진 몸선을 지닌 군인 특유의 단단하고 균형 잡힌 체형. 겉으로는 무표정하고 느슨해 보이지만 항상 긴장감을 품고 있다.<br><br>감정을 드러내지 않는 통제형 성향으로 말은 짧고 직설적이다. 감정보다 판단과 결정을 우선하며 한 번 정한 일은 끝까지 밀어붙인다.</div>
+      </div>
 
-</div>
+      <div class="pair-char-card">
+        <div class="pair-char-name">🩹 서아영</div>
+        <div class="pair-char-body">갈색 단발과 녹색 눈을 가진 슬렌더 체형으로 군인답게 단단한 인상을 준다. 겉보기에는 마른 편이지만 가까이서 보면 실전에서 단련된 근육이 느껴진다.<br><br>밝고 다정한 태도로 사람들을 대하지만 보이지 않는 거리감을 두는 편이다. 타인을 돕는 데 주저하지 않으며 자신의 위험을 감수하는 이타적인 성향을 지녔다.</div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /.iphone -->
 
 <script>
 /* ─── TIME ─── */
@@ -904,20 +981,37 @@ function closeApp(id) {
   document.getElementById(id).classList.remove('open');
 }
 function closeAllApps() {
-  ['app-messages','app-convo','app-stats','app-dday','app-radio'].forEach(closeApp);
+  ['app-messages','app-convo','app-stats','app-radio','app-profile','app-pair'].forEach(closeApp);
 }
 
 document.getElementById('open-messages').addEventListener('click', ()=>openApp('app-messages'));
 document.getElementById('open-messages-dock').addEventListener('click', ()=>openApp('app-messages'));
 document.getElementById('open-stats').addEventListener('click', ()=>{ openApp('app-stats'); loadStats(); });
-document.getElementById('open-dday').addEventListener('click', ()=>{ openApp('app-dday'); loadDday(); });
 
 document.getElementById('back-from-messages').addEventListener('click', ()=>closeApp('app-messages'));
 document.getElementById('back-from-stats').addEventListener('click', ()=>closeApp('app-stats'));
-document.getElementById('back-from-dday').addEventListener('click', ()=>closeApp('app-dday'));
 document.getElementById('back-from-convo').addEventListener('click', ()=>closeApp('app-convo'));
 document.getElementById('open-radio').addEventListener('click', () => openApp('app-radio'));
 document.getElementById('back-from-radio').addEventListener('click', () => closeApp('app-radio'));
+
+document.getElementById('open-profile').addEventListener('click', () => openApp('app-profile'));
+document.getElementById('back-from-profile').addEventListener('click', () => closeApp('app-profile'));
+
+document.getElementById('open-pair').addEventListener('click', () => { openApp('app-pair'); loadPairDday(); });
+document.getElementById('back-from-pair').addEventListener('click', () => closeApp('app-pair'));
+
+// Profile card toggle
+document.querySelectorAll('.profile-card').forEach(card => {
+  card.addEventListener('click', () => card.classList.toggle('open'));
+});
+
+// Pair D-Day
+function loadPairDday() {
+  const start = new Date('2025-05-02T00:00:00');
+  const now = new Date();
+  const days = Math.floor((now - start) / (1000*60*60*24));
+  document.getElementById('pair-dday-val').textContent = days;
+}
 
 document.getElementById('open-convo-gov').addEventListener('click', ()=>{
   document.querySelector('#open-messages .notif-badge').style.display='none';
@@ -981,35 +1075,6 @@ document.getElementById('refresh-stats').addEventListener('click', ()=>{
   setTimeout(loadStats, 600);
 });
 
-
-
-function loadDday() {
-  // 2025-05-03 is D+1, so we subtract 1 from actual elapsed days
-  const start = new Date('2025-05-02T00:00:00'); // shift back 1 day so May 3 = D+1
-  const now = new Date();
-  const diffMs = now - start;
-  const diffDays = Math.floor(diffMs / (1000*60*60*24));
-  const diffHours = Math.floor(diffMs / (1000*60*60));
-  const diffWeeks = Math.floor(diffDays / 7);
-
-  document.getElementById('dday-val').textContent = diffDays;
-  document.getElementById('dday-weeks').textContent = diffWeeks + '주';
-  document.getElementById('dday-hours').textContent = diffHours.toLocaleString('ko-KR') + 'h';
-
-  const today = now;
-  document.getElementById('dday-today').textContent =
-    `${today.getMonth()+1}/${today.getDate()}`;
-
-  let phase, pct;
-  if (diffDays < 7) { phase='초기'; pct=25; }
-  else if (diffDays < 30) { phase='확산'; pct=50; }
-  else if (diffDays < 90) { phase='심각'; pct=75; }
-  else { phase='파국'; pct=100; }
-
-  document.getElementById('dday-phase').textContent = phase;
-  document.getElementById('progress-level').textContent = phase;
-  setTimeout(()=>{ document.getElementById('progress-bar').style.width = pct+'%'; }, 200);
-}
 </script>
 </body>
 </html>
